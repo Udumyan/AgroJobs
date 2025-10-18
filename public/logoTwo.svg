@@ -1,0 +1,11 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="50" viewBox="0 0 200 50">
+  <!-- Leaf icon -->
+  <path d="M10 40 C 20 10, 40 10, 50 40 S 90 70, 100 40" fill="#4CAF50"/>
+  
+  <!-- Text -->
+  <text x="60" y="35" font-family="Arial, sans-serif" font-size="24" fill="#2F5233" font-weight="bold">
+    AgroJobs
+  </text>
+</svg>
