@@ -1,105 +1,47 @@
-import './App.css';
-import { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
+import './App.css'
+import { useState, useEffect } from "react";
 
 export default function App() {
   const [jobs, setJobs] = useState([]);
-  const [filteredJobs, setFilteredJobs] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
-    name: '',
-    region: '',
-    type: '',
-    pay: '',
-    contact: '',
+    name: "",
+    region: "",
+    type: "",
+    pay: "",
+    contact: "",
   });
 
+  // Load jobs from localStorage
   useEffect(() => {
-    fetchJobs();
+    const savedJobs = JSON.parse(localStorage.getItem("jobs")) || [];
+    setJobs(savedJobs);
   }, []);
 
+  // Save jobs to localStorage
   useEffect(() => {
-    filterJobs();
-  }, [jobs, searchTerm]);
-
-  const fetchJobs = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const { data, error } = await supabase
-        .from('jobs')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      setJobs(data || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterJobs = () => {
-    if (!searchTerm.trim()) {
-      setFilteredJobs(jobs);
-      return;
-    }
-
-    const term = searchTerm.toLowerCase();
-    const filtered = jobs.filter(
-      (job) =>
-        job.name.toLowerCase().includes(term) ||
-        job.region.toLowerCase().includes(term) ||
-        job.type.toLowerCase().includes(term) ||
-        job.pay.toLowerCase().includes(term)
-    );
-    setFilteredJobs(filtered);
-  };
+    localStorage.setItem("jobs", JSON.stringify(jobs));
+  }, [jobs]);
 
   const handleInputChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      setError(null);
-      const { data, error } = await supabase
-        .from('jobs')
-        .insert([formData])
-        .select();
-
-      if (error) throw error;
-
-      setJobs((prev) => [data[0], ...prev]);
-      setFormData({ name: '', region: '', type: '', pay: '', contact: '' });
-      setShowForm(false);
-    } catch (err) {
-      setError(err.message);
-    }
+    const newJob = { id: Date.now(), ...formData };
+    setJobs((prev) => [newJob, ...prev]);
+    setFormData({ name: "", region: "", type: "", pay: "", contact: "" });
+    setShowForm(false);
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this job?')) return;
-
-    try {
-      setError(null);
-      const { error } = await supabase.from('jobs').delete().eq('id', id);
-
-      if (error) throw error;
-      setJobs((prev) => prev.filter((job) => job.id !== id));
-    } catch (err) {
-      setError(err.message);
-    }
+  const handleDelete = (id) => {
+    setJobs((prev) => prev.filter((job) => job.id !== id));
   };
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
-    alert('Copied to clipboard!');
+    alert("Copied to clipboard!");
   };
 
   return (
@@ -107,33 +49,20 @@ export default function App() {
       <header className="site-header">
         <div className="container">
           <h1>AgroJobs</h1>
-          <p className="tag">
-            Գյուղատնտեսական աշխատանքներ — պարզ, արագ, տեղական
-          </p>
+          <p className="tag">Գյուղատնտեսական աշխատանքներ — պարզ, արագ, տեղական</p>
         </div>
       </header>
 
       <main className="container">
         <section className="hero">
           <h2>Գտիր աշխատանք կամ աշխատող մի քանի րոպեում</h2>
-          <p>
-            Ավելացրու հայտարարություն կամ փնտրիր մոտակա ֆերմերների առաջարկները։
-          </p>
+          <p>Ավելացրու հայտարարություն կամ փնտրիր մոտակա ֆերմերների առաջարկները։</p>
           <div className="cta">
-            <button
-              className="btn primary"
-              onClick={() => setShowForm(!showForm)}
-            >
-              {showForm ? 'Փակել ձևը' : 'Ավելացնել հայտարարություն'}
+            <button className="btn primary" onClick={() => setShowForm(!showForm)}>
+              Ավելացնել հայտարարություն
             </button>
           </div>
         </section>
-
-        {error && (
-          <div className="error">
-            Սխալ: {error}
-          </div>
-        )}
 
         {showForm && (
           <section id="formSection" className="card">
@@ -200,56 +129,28 @@ export default function App() {
         )}
 
         <section id="jobsSection" className="card">
-          <div className="section-header">
-            <h3>Հայտարարություններ</h3>
-            <div className="search-filter">
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Փնտրել ըստ անվան, տարածքի, տեսակի..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="loading">
-              <div className="spinner"></div>
-              <p>Բեռնում...</p>
-            </div>
-          ) : filteredJobs.length === 0 ? (
-            <p className="muted">
-              {searchTerm
-                ? 'Չգտնվեց հայտարարություն։'
-                : 'Ահա դեռ չկան հայտարարություններ — ավելացրեք առաջինը։'}
-            </p>
+          <h3>Հայտարարություններ</h3>
+          {jobs.length === 0 ? (
+            <p className="muted">Ահա դեռ չկան հայտարարություններ — ավելացրեք առաջինը։</p>
           ) : (
             <ul className="jobs-list">
-              {filteredJobs.map((job) => (
+              {jobs.map((job) => (
                 <li key={job.id} className="job card-small">
                   <div className="job-main">
                     <strong className="job-name">{job.name}</strong>
                     <span className="job-region">{job.region}</span>
                     <div className="job-type">{job.type}</div>
-                    {job.pay && <div className="job-pay">{job.pay}</div>}
-                    {job.contact && (
-                      <div className="job-contact">Կապ: {job.contact}</div>
-                    )}
                   </div>
-                  <div className="job-actions">
+                  <div className="job-meta">
+                    <span className="job-pay">{job.pay}</span>
                     <button
-                      className="btn small primary"
-                      onClick={() =>
-                        handleCopy(
-                          `${job.name} - ${job.region}\n${job.type}\n${job.pay}\nContact: ${job.contact}`
-                        )
-                      }
+                      className="btn small copyBtn"
+                      onClick={() => handleCopy(`${job.name} - ${job.contact}`)}
                     >
                       Copy
                     </button>
                     <button
-                      className="btn small danger"
+                      className="btn small deleteBtn"
                       onClick={() => handleDelete(job.id)}
                     >
                       Delete
@@ -279,3 +180,5 @@ export default function App() {
     </div>
   );
 }
+
+
